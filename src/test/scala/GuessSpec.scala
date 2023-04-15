@@ -1,6 +1,5 @@
 package com.edgiese.wordle1
 
-import com.edgiese.wordle1.GameError.BadWordLength
 import org.scalatest.flatspec.AnyFlatSpec
 
 class GuessSpec extends AnyFlatSpec {
@@ -40,5 +39,14 @@ class GuessSpec extends AnyFlatSpec {
         assert(!game.isWon)
         assert(!game.isLost)
   }
+
+  it should "correctly mark a win" in {
+    Game(5, 6, alwaysWin) match
+      case Left(_) => fail("Should have been able to create the game")
+      case Right(game) => game.addGuess("arise") match
+          case Left(_) => fail("should be able to add first guess")
+          case Right(game2) => assert(game2.isWon)
+  }
+
 
 }
