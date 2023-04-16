@@ -1,5 +1,7 @@
 package com.edgiese.wordle1
 
+import judging.Judger
+
 import scala.annotation.tailrec
 
 enum LetterResult:
@@ -16,13 +18,11 @@ case class BadGuess(word: String, error: GuessError)
 case class Guess(word: String, result: List[LetterResult]):
   def isWinningGuess: Boolean = result.count(_ == LetterResult.Correct) == word.length
 
-type Discriminator = String => Either[BadGuess, Guess]
-
 class Game private (
                      wordLength: Int,
                      guessCount: Int,
                      guesses: List[Either[BadGuess, Guess]],
-                     discriminator: Discriminator):
+                     judger: Judger):
   @tailrec
   private def lastGuess(foundSoFar: Int, lookIn: List[Either[BadGuess, Guess]]): Option[Guess] =
     if (lookIn.isEmpty)
@@ -43,8 +43,8 @@ class Game private (
     if (lastGuess(0, guesses).isDefined)
       Left(GameError.GameOver)
     else
-      val nextGuess = discriminator(guess)
-      Right(new Game(wordLength, guessCount, guesses :+ nextGuess, discriminator))
+      val nextGuess = judger.judgeGuess(guess)
+      Right(new Game(wordLength, guessCount, guesses :+ nextGuess, judger))
       
   def mostRecentGuess(): Option[Guess] = lastGuess(0, guesses)
   
@@ -56,9 +56,9 @@ class Game private (
   
 
 object Game:
-  def apply(wordLength: Int, guessCount: Int, discriminator: Discriminator): Either[GameError, Game] =
+  def apply(wordLength: Int, guessCount: Int, judger: Judger): Either[GameError, Game] =
     if (1 > wordLength)
       return Left(GameError.BadWordLength)
     if (1 > guessCount)
       return Left(GameError.BadTurnCount)
-    Right(new Game(wordLength, guessCount, List.empty, discriminator))
+    Right(new Game(wordLength, guessCount, List.empty, judger))
