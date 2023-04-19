@@ -4,19 +4,8 @@ import judging.Judger
 
 import scala.annotation.tailrec
 
-enum LetterResult:
-  case Unused, Exists, Correct
-
-enum GuessError:
-  case WrongLength, NotAWord
-
 enum GameError:
   case BadWordLength, BadTurnCount, InconsistentGuess, GameOver
-
-case class BadGuess(word: String, error: GuessError)
-
-case class Guess(word: String, result: List[LetterResult]):
-  def isWinningGuess: Boolean = result.count(_ == LetterResult.Correct) == word.length
 
 class Game private (
                      wordLength: Int,
@@ -39,11 +28,11 @@ class Game private (
           lastGuess(found, lookIn.tail)  // KEEP LOOKING
 
 
-  def addGuess(guess: String): Either[GameError, Game] =
+  def addGuess(guessString: String): Either[GameError, Game] =
     if (lastGuess(0, guesses).isDefined)
       Left(GameError.GameOver)
     else
-      val nextGuess = judger.judgeGuess(guess)
+      val nextGuess = judger.judgeGuess(guessString, guesses)
       Right(new Game(wordLength, guessCount, guesses :+ nextGuess, judger))
       
   def mostRecentGuess(): Option[Guess] = lastGuess(0, guesses)
