@@ -12,15 +12,20 @@ trait BasicJudge(wordLength: Int, hardMode: Boolean) extends Judger {
     if guessString.length != wordLength then
       Left(BadGuess(guessString, GuessError.WrongLength))
     // check for bad characters -- only letters allowed  
-    else if "[^A-Za-z]".r.matches(guessString) then
+    else if "[^A-Za-z]".r.unanchored.matches(guessString) then
       Left(BadGuess(guessString, GuessError.BadCharacter))
-    // check for "hard mode" - guesses must conform to previous guess's clues  
+    // check for "hard mode" - guesses must conform to previous guess's clues
+    // following expression is TRUE if there is a violation... does any guess exist that's a violation?
     else if hardMode && guesses.exists {
+      // we ignore error guesses -- Right result only. For Right, look for a faulty character:
       case Right(Guess(oldGuessString, letterResults)) => letterResults.zipWithIndex.exists {
-        case (LetterResult.Unused, _) => false
+        // if a letter is marked unused, it must not be used in a subsequent guess
+        case (LetterResult.Unused, ix) => guessString.contains(oldGuessString.charAt(ix))
+        // if a letter is marked "correct" it must be the same in the same place
         case (LetterResult.Correct, ix) => oldGuessString.charAt(ix) != guessString.charAt(ix)
+        // if a letter "exists" it must be somewhere in the new guess
         // This does not cover complex cases with multiples of letters ... make this better
-        case (LetterResult.Exists, ix) => guessString.contains(oldGuessString.charAt(ix))
+        case (LetterResult.Exists, ix) => !guessString.contains(oldGuessString.charAt(ix))
       }
       case _ => false
     } then
