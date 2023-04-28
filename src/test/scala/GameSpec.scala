@@ -3,10 +3,6 @@ package com.edgiese.wordle1
 import org.scalatest.flatspec.AnyFlatSpec
 
 class GameSpec extends AnyFlatSpec {
-  // this discriminator always says every character is unused. So everyone wins the game with this one
-  def alwaysLose(guessText: String): Either[BadGuess, Guess] =
-    Right(Guess(guessText, guessText.map(_ => LetterResult.Unused).toList))
-
   behavior of "a game"
 
   it should "fail to create if letter count is less than 1" in {
