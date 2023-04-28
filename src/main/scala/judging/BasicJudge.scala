@@ -27,6 +27,7 @@ trait BasicJudge(wordLength: Int, hardMode: Boolean) extends Judger {
         // This does not cover complex cases with multiples of letters ... make this better
         case (LetterResult.Exists, ix) => !guessString.contains(oldGuessString.charAt(ix))
       }
+      // ignore Left (bad guesses) in hard mode search
       case _ => false
     } then
       Left(BadGuess(guessString, GuessError.HardModeViolation))
