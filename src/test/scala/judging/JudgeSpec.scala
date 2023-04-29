@@ -4,29 +4,25 @@ package judging
 import org.scalatest.flatspec.AnyFlatSpec
 import LetterResult.*
 
+import scala.util.Right
+
 class JudgeSpec extends AnyFlatSpec:
   behavior of "a judge"
 
-  private val allCorrect: List[LetterResult] = Correct :: Correct :: Correct :: Correct :: Correct
+  private val allCorrect: List[LetterResult] = List(Correct, Correct, Correct, Correct, Correct)
 
   it should "convert guesses to lowercase" in {
-    val gbj = BasicJudge("catty", true, "catty" :: "doggy")
-    assert (gbj.judgeGuess("Catty", Nil), Right(Guess("Catty", allCorrect)))
+    val gbj = Judge("catty", true, List("catty", "doggy"))
+    assert(gbj.judgeGuess("Catty", Nil) == Right(Guess("catty", allCorrect)))
   }
 
   it should "return a bad guess if length is wrong" in {
-    val gbj = GenericBasicJudge(true, guess => {
-      fail("Should have failed before calling buildGuess")
-      Left(BadGuess("ignore", GuessError.BadCharacter))
-    })
+    val gbj = Judge("catty", true, List("catty", "doggy"))
     assert(gbj.judgeGuess("cat", Nil) == Left(BadGuess("cat", GuessError.WrongLength)))
   }
 
   it should "return a bad guess if non-letters present" in {
-    val gbj = GenericBasicJudge(true, guess => {
-      fail("Should have failed before calling buildGuess")
-      Left(BadGuess("ignore", GuessError.BadCharacter))
-    })
+    val gbj = Judge("catty", true, List("catty", "doggy"))
     assert(gbj.judgeGuess("cats!", Nil) == Left(BadGuess("cats!", GuessError.BadCharacter)))
   }
 
@@ -38,43 +34,49 @@ class JudgeSpec extends AnyFlatSpec:
     Left(BadGuess("apise", GuessError.NotAWord)),
     Right(Guess("spine", List(Correct, Unused, Correct, Unused, Correct))),
   )
+  private val allowedWords = List("arise", "spine", "spike", "apple", "spite", "knife", "smite")
 
   it should "accept a guess in non-hard mode that does not conform to old guesses" in {
-    val gbj = GenericBasicJudge(false, guess => {
-      assert(guess == "apple")
-      Left(BadGuess("ignored", GuessError.BadCharacter))
-    })
-    gbj.judgeGuess("apple", guessHistory)
+    val gbj = Judge("smite", false, allowedWords)
+    assert (gbj.judgeGuess("apple", guessHistory) == Right(Guess("apple", List(Unused, Unused, Unused, Unused, Correct))))
   }
 
   it should "return a hard-mode violation for repeated incorrect characters" in {
-    val gbj = GenericBasicJudge(true, guess => {
-      fail("Should have failed before calling buildGuess")
-      Left(BadGuess("ignore", GuessError.BadCharacter))
-    })
+    val gbj = Judge("smite", true, allowedWords)
     assert(gbj.judgeGuess("arise", guessHistory) == Left(BadGuess("arise", GuessError.HardModeViolation)))
   }
 
   it should "return a hard-mode violation for missing correct characters" in {
-    val gbj = GenericBasicJudge(true, guess => {
-      fail("Should have failed before calling buildGuess")
-      Left(BadGuess("ignore", GuessError.BadCharacter))
-    })
+    val gbj = Judge("smite", true, allowedWords)
     assert(gbj.judgeGuess("smoke", guessHistory) == Left(BadGuess("smoke", GuessError.HardModeViolation)))
   }
 
   it should "return a hard-mode violation for missing existing characters" in {
-    val gbj = GenericBasicJudge(true, guess => {
-      fail("Should have failed before calling buildGuess")
-      Left(BadGuess("ignore", GuessError.BadCharacter))
-    })
+    val gbj = Judge("smite", true, allowedWords)
     assert(gbj.judgeGuess("knife", guessHistory) == Left(BadGuess("knife", GuessError.HardModeViolation)))
   }
 
   it should "pass on a guess that meets hard-mode criteria" in {
-    val winningGuess = Guess("smite", List(Correct, Correct, Correct, Correct, Correct))
-    val gbj = GenericBasicJudge(true, _ => {
-      Right(winningGuess)
-    })
-    assert(gbj.judgeGuess("smite", guessHistory) == Right(winningGuess))
+    val gbj = Judge("smite", true, allowedWords)
+    assert(gbj.judgeGuess("smite", guessHistory) == Right(Guess("smite", allCorrect)))
+  }
+
+  it should "properly handle duplicated characters" in {
+    val gbj = Judge("wheee", true, List("wheee", "eeemk"))
+    assert(gbj.judgeGuess("eeemk", Nil) == Right(Guess("eeemk", List(Exists, Exists, Correct, Unused, Unused))))
+  }
+
+  it should "handle first guess copied from NYT" in {
+    val gbj = Judge("circa", false, List("arise", "rapid", "cigar", "circa"))
+    assert(gbj.judgeGuess("arise", Nil) == Right(Guess("arise", List(Exists, Exists, Exists, Unused, Unused))))
+  }
+
+  it should "handle second guess copied from NYT" in {
+    val gbj = Judge("circa", false, List("arise", "rapid", "cigar", "circa"))
+    assert(gbj.judgeGuess("rapid", Nil) == Right(Guess("rapid", List(Exists, Exists, Unused, Exists, Unused))))
+  }
+
+  it should "handle third guess copied from NYT" in {
+    val gbj = Judge("circa", false, List("arise", "rapid", "cigar", "circa"))
+    assert(gbj.judgeGuess("cigar", Nil) == Right(Guess("cigar", List(Correct, Correct, Unused, Exists, Exists))))
   }

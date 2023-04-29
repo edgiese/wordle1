@@ -18,7 +18,8 @@ class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) ext
     else
       buildLetterResults(guessLets.tail, ansLets, accumResults :+ LetterResult.Unused)
 
-  def judgeGuess(guessString: String, guesses: List[Either[BadGuess, Guess]]): Either[BadGuess, Guess] =
+  def judgeGuess(guessStringMixed: String, guesses: List[Either[BadGuess, Guess]]): Either[BadGuess, Guess] =
+    val guessString = guessStringMixed.toLowerCase()
     // check for word length
     if guessString.length != answer.length then
       Left(BadGuess(guessString, GuessError.WrongLength))
@@ -42,7 +43,7 @@ class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) ext
       case _ => false
     } then
       Left(BadGuess(guessString, GuessError.HardModeViolation))
-    else if !allowedGuesses.contains(guessString) then
+    else if !allowedGuesses.contains(guessString.toLowerCase) then
       Left(BadGuess(guessString, GuessError.NotAWord))
     // all basic checks pass -- convert to lower case and build guess
     else
