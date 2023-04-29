@@ -6,7 +6,8 @@ import scala.annotation.tailrec
 // Implements basic wordle rules to judge a guess.
 class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) extends Judger:
   @tailrec
-  private def buildLetterResults(guessLets: List[Char], ansLets: List[Char], accumResults: List[LetterResult]): List[LetterResult] =
+  private def buildLetterResults(guessLets: List[Char], ansLets: List[Char], accumResults: List[LetterResult]):
+    List[LetterResult] =
     if guessLets.isEmpty then
       accumResults
     else if guessLets.head == '_' then
@@ -50,4 +51,6 @@ class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) ext
       // first step is to mark all matching letters.
       val compares = guessString.zip(answer).map((g, a) => if g == a then ('_', '_') else (g, a))
       // now go through and convert guess string to guess result
-      Right(Guess(guessString, buildLetterResults(compares.map(_._1).toList, compares.map(_._2).toList, List())))
+      Right(Guess(guessString,
+        buildLetterResults(compares.map(_._1).toList, compares.map(_._2).filter(_ != '_').toList, List())
+      ))
