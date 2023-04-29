@@ -6,20 +6,21 @@ import scala.annotation.tailrec
 // Implements basic wordle rules to judge a guess.
 class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) extends Judger:
   @tailrec
-  private def buildLetterResults(guessLets: List[Char], ansLets: List[Char], accumResults: List[LetterResult]):
-    List[LetterResult] =
-    if guessLets.isEmpty then
-      accumResults
-    else if guessLets.head == '_' then
-      // if this matches, mark it. We did this ahead of time so that 'Exists' characters report at a lower priority
-      buildLetterResults(guessLets.tail, ansLets, accumResults :+ LetterResult.Correct)
-    else if ansLets contains guessLets.head then
-      // if answer contains guessed letter, not only report that, but remove that letter from the answers
-      buildLetterResults(guessLets.tail, ansLets diff Seq(guessLets.head), accumResults :+ LetterResult.Exists)
-    else
-      buildLetterResults(guessLets.tail, ansLets, accumResults :+ LetterResult.Unused)
+  private def buildResults(gLets: List[Char], aLets: List[Char], acc: List[LetterResult]): List[LetterResult] =
+    gLets.headOption match
+      // all done
+      case None => acc
+      // pre-matched "correct"
+      case _ if gLets.head == '_'  =>
+        buildResults(gLets.tail, aLets, acc :+ LetterResult.Correct)
+      // exists -- remove matching char from answer, it's used now
+      case _ if aLets contains gLets.head =>
+        buildResults(gLets.tail, aLets diff Seq(gLets.head), acc :+ LetterResult.Exists)
+      // unused
+      case _ =>
+        buildResults(gLets.tail, aLets, acc :+ LetterResult.Unused)
 
-  def judgeGuess(guessStringMixed: String, guesses: List[Either[BadGuess, Guess]]): Either[BadGuess, Guess] =
+def judgeGuess(guessStringMixed: String, guesses: List[Either[BadGuess, Guess]]): Either[BadGuess, Guess] =
     val guessString = guessStringMixed.toLowerCase()
     // check for word length
     if guessString.length != answer.length then
@@ -48,9 +49,9 @@ class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) ext
       Left(BadGuess(guessString, GuessError.NotAWord))
     // all basic checks pass -- convert to lower case and build guess
     else
-      // first step is to mark all matching letters.
+      // pre-match exact matches. They become _ in guess and are removed from answer
       val compares = guessString.zip(answer).map((g, a) => if g == a then ('_', '_') else (g, a))
-      // now go through and convert guess string to guess result
-      Right(Guess(guessString,
-        buildLetterResults(compares.map(_._1).toList, compares.map(_._2).filter(_ != '_').toList, List())
-      ))
+      val guessLetters = compares.map(_._1).toList
+      val answerLetters = compares.map(_._2).filter(_ != '_').toList
+      // convert guess and answer lists to letter results and form Guess
+      Right(Guess(guessString, buildResults(guessLetters, answerLetters, List())))
