@@ -26,7 +26,7 @@ class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) ext
       if guessString.length != answer.length then
         Left(BadGuess(guessString, GuessError.WrongLength))
       // check for bad characters -- only letters allowed
-      else if "[^A-Za-z]".r.unanchored.matches(guessString) then
+      else if "[^a-z]".r.unanchored.matches(guessString) then
         Left(BadGuess(guessString, GuessError.BadCharacter))
       // check for "hard mode" - guesses must conform to previous guess's clues
       // following expression is TRUE if there is a violation... does any guess exist that's a violation?
