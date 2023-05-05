@@ -12,11 +12,10 @@ class ListSolverSpec extends AnyFlatSpec:
   private val listSolver = ListSolver(wordSet1, wordSet1, baseConfig)
 
   it should "return an error when the game is over" in {
-    val game = for
-      g1 <- Game(5, 6, Judge("apple", false, wordSet1))
-      g2 <- g1.addGuess("apple")
-    yield g2
-    listSolver.solve(game.toOption.get) match
+    for
+      g1   <- Game(5, 6, Judge("apple", false, wordSet1))
+      game <- g1.addGuess("apple")
+    do listSolver.solve(game) match
       case Right(_) => fail("should return an error but did not")
       case Left(error) => assert(error == SolverError.GameOver)
   }
@@ -24,22 +23,20 @@ class ListSolverSpec extends AnyFlatSpec:
   it should "resign when there are no more words to try" in {
     val smallWordSet = List("apple", "arise")
     val solver = ListSolver(smallWordSet, smallWordSet, baseConfig)
-    val game = for
-      g1 <- Game(5, 6, Judge("suxby", false, smallWordSet))
-      g2 <- g1.addGuess("apple")
-      g3 <- g2.addGuess("arise")
-    yield g3
-    solver.solve(game.toOption.get) match
+    for
+      g1   <- Game(5, 6, Judge("suxby", false, smallWordSet))
+      g2   <- g1.addGuess("apple")
+      game <- g2.addGuess("arise")
+    do solver.solve(game) match
       case Right(_) => fail("should return an error but did not")
       case Left(error) => assert(error == SolverError.GameOver)
   }
 
   it should "make the right guess when only one works" in {
-    val game = for
-      g1 <- Game(5, 6, Judge("apple", false, wordSet1))
-      g2 <- g1.addGuess("topaz")
-    yield g2
-    listSolver.solve(game.toOption.get) match
+    for
+      g1   <- Game(5, 6, Judge("apple", false, wordSet1))
+      game <- g1.addGuess("topaz")
+    do listSolver.solve(game) match
       case Right(solution) =>
         assert(solution.word == "apple")
         assert(solution.oneOf == 1)
@@ -47,13 +44,12 @@ class ListSolverSpec extends AnyFlatSpec:
   }
 
   it should "make one of two right guesses when there are two" in {
-    val game = for
-      g1 <- Game(5, 6, Judge("spite", false, wordSet1))
-      g2 <- g1.addGuess("apple")
-    yield g2
-    listSolver.solve(game.toOption.get) match
+    for
+      g1   <- Game(5, 6, Judge("spite", false, wordSet1))
+      game <- g1.addGuess("apple")
+    do listSolver.solve(game) match
       case Right(solution) =>
-        assert(solution.word == "spite" || solution.word == "spine")
+        assert(List("spite", "spine") contains solution.word)
         assert(solution.oneOf == 2)
       case Left(error) => fail("Solve error: " + error)
   }
@@ -61,12 +57,12 @@ class ListSolverSpec extends AnyFlatSpec:
   it should "choose a word that eliminates the most options" in {
     // correct guess is "forge" because it combines the "f" in place 0 and the "g" in place 3
     val wordSet2 = List("arise", "route", "borne", "force", "forge", "gorge", "horde")
-    val game = for
-      g1 <- Game(5, 6, Judge("horde", false, wordSet2))
-      g2 <- g1.addGuess("arise")
-      g3 <- g2.addGuess("route")
-    yield g3
-    listSolver.solve(game.toOption.get) match
+    val solver = ListSolver(wordSet2, wordSet2, baseConfig)
+    for
+      g1   <- Game(5, 6, Judge("horde", false, wordSet2))
+      g2   <- g1.addGuess("arise")
+      game <- g2.addGuess("route")
+    do solver.solve(game) match
       case Right(solution) =>
         assert(solution.word == "forge")
         assert(solution.oneOf == 5)
