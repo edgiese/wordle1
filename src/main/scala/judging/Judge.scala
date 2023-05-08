@@ -47,7 +47,7 @@ class Judge(answer: String, hardMode: Boolean, allowedGuesses: List[String]) ext
         Left(BadGuess(guessString, GuessError.HardModeViolation))
       else if !allowedGuesses.contains(guessString.toLowerCase) then
         Left(BadGuess(guessString, GuessError.NotAWord))
-      // all basic checks pass -- convert to lower case and build guess
+      // all basic checks pass -- build guess
       else
         // pre-match exact matches. They become _ in guess and are removed from answer
         val compares = guessString.zip(answer).map((g, a) => if g == a then ('_', '_') else (g, a))

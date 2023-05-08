@@ -12,22 +12,14 @@ class Game private (
                      guessCount: Int,
                      guesses: List[Either[BadGuess, Guess]],
                      judger: Judger):
+
   @tailrec
-  private def lastGuess(foundSoFar: Int, lookIn: List[Either[BadGuess, Guess]]): Option[Guess] =
-    if (lookIn.isEmpty)
-      None  // GAME IN PROGRESS
-    else
-      val guess = lookIn.head
-      if (guess.exists(_.isWinningGuess))
-        guess.toOption  // WON GAME
-      else
-        val found = foundSoFar + (if (guess.isRight) 1 else 0)
-        if (found >= guessCount)
-          guess.toOption   // LOST GAME
-        else
-          lastGuess(found, lookIn.tail)  // KEEP LOOKING
-
-
+  private def lastGuess(foundSoFar: Int, lookIn: List[Either[BadGuess, Guess]]): Option[Guess] = lookIn.headOption match
+    case None => None // game in progress
+    case Some(Right(guess)) if guess.isWinningGuess || foundSoFar >= guessCount => Some(guess)  // game over -- won or lost
+    case Some(Left(_)) => lastGuess(foundSoFar, lookIn.tail)  // bad guesses don't count toward limit
+    case Some(Right(_)) => lastGuess(foundSoFar + 1, lookIn.tail)
+    
   def addGuess(guessString: String): Either[GameError, Game] =
     if (lastGuess(0, guesses).isDefined)
       Left(GameError.GameOver)
