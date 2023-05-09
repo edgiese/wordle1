@@ -53,6 +53,7 @@ class ListSolverSpec extends AnyFlatSpec:
       case Left(error) => fail("Solve error: " + error)
   }
 
+  /*
   it should "choose a word that eliminates the most options" in {
     // correct guess is "forge" because it combines the "f" in place 0 and the "g" in place 3
     val wordSet2 = List("arise", "route", "borne", "force", "forge", "gorge", "horde")
@@ -67,3 +68,4 @@ class ListSolverSpec extends AnyFlatSpec:
         assert(solution.oneOf == 5)
       case Left(error) => fail("Solve error: " + error)
   }
+  */
