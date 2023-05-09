@@ -16,7 +16,7 @@ case class BadGuess(word: String, error: GuessError):
 
 case class Guess(word: String, result: List[LetterResult]):
   def isWinningGuess: Boolean = result.count(_ == LetterResult.Correct) == word.length
-  override def toString: String = word.zip(result).foldLeft("")((str, ztuple) => str + ztuple._1 + ztuple._2.toChar)
+  override def toString: String = word.zip(result).foldLeft("")((str, ztuple) => str + ztuple._2.toChar + ztuple._1)
 enum GameError:
   case BadWordLength, BadTurnCount, BadAnswers, GameOver
 

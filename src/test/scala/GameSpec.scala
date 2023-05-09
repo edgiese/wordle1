@@ -128,6 +128,7 @@ class GameSpec extends AnyFlatSpec {
   }
 
   it should "return a hard-mode violation for missing correct characters" in {
+    println(hardModeTestGame)
     val gameOrError = hardModeTestGame.addGuess("smoke")
     gameOrError match
       case Left(error) => fail("Game error: " + error)
