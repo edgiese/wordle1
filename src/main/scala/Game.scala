@@ -11,7 +11,8 @@ enum LetterResult(annotation: Char):
 enum GuessError:
   case WrongLength, BadCharacter, NotAWord, HardModeViolation
 
-case class BadGuess(word: String, error: GuessError)
+case class BadGuess(word: String, error: GuessError):
+  override def toString: String = '"' + word + "\": " + error
 
 case class Guess(word: String, result: List[LetterResult]):
   def isWinningGuess: Boolean = result.count(_ == LetterResult.Correct) == word.length
@@ -113,9 +114,18 @@ class Game private (
   def wordLength: Int = answer.length
 
   override def toString: String = {
-    val guessList = guesses.filter(_.isRight).map({ case Right(g) => g }).mkString("guesses: \n", "\n", "\n" + "=" * answer.length * 2)
-    val endString = if isLost then "game lost. anwer: " + answer else if isWon then "Won game" else "guesses left: " + (maxGuessCount - getGoodGuesses.length)
-    "hard mode = " + hardMode + "\n" + guessList + "\n" + endString
+    val guessList = guesses.map({ 
+      case Right(g) => g
+      case Left(e) => e  
+    }).mkString("GUESSES: \n  ", "\n  ", "\n  " + "=" * answer.length * 2)
+    val endString = 
+      if isLost then
+        "game lost. anwer: " + answer 
+      else if isWon then 
+        "Won game" 
+      else 
+        "guesses left: " + (maxGuessCount - getGoodGuesses.length)
+    "GAME START:\n  hard mode = " + hardMode + "\n  " + guessList + "\n  " + endString + "\nGAME END"
   }
 
 

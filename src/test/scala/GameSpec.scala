@@ -183,5 +183,6 @@ class GameSpec extends AnyFlatSpec {
     gameOrError match
       case Left(error) => fail("Game error: " + error)
       case Right(game) => assert(game.guesses == listOfGuesses)
+
   }
 }
