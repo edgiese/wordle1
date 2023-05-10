@@ -32,19 +32,25 @@ class Game private (
                      val hardMode: Boolean,
                      val state: GameState
                    ):
+  // calculates game state from guess data
   @tailrec
-  private def gameState(foundSoFar: Int, lookIn: List[Either[BadGuess, Guess]]): GameState = lookIn.headOption match
-    case None =>
-      GameState.Ongoing
-    case Some(Right(guess)) if guess.isWinningGuess =>
-      GameState.Won
-    case Some(Right(_)) if foundSoFar + 1 >= maxGuessCount =>
-      GameState.Lost
-    case Some(Left(_)) =>
-      gameState(foundSoFar, lookIn.tail)
-    case Some(Right(_)) =>
-      gameState(foundSoFar + 1, lookIn.tail)
+  private def gameState(foundSoFar: Int, guessList: List[Either[BadGuess, Guess]]): GameState =
+    guessList.headOption match
+      case None =>
+        GameState.Ongoing
+      case Some(Right(guess)) if guess.isWinningGuess =>
+        GameState.Won
+      case Some(Right(_)) if foundSoFar + 1 >= maxGuessCount =>
+        GameState.Lost
+      // bad guesses don't count against turn count
+      case Some(Left(_)) =>
+        gameState(foundSoFar, guessList.tail)
+      case Some(Right(_)) =>
+        gameState(foundSoFar + 1, guessList.tail)
 
+  // from two lists of letters, "guess" and "answer" letters, build letter results for a guess. Note that this method
+  // assumes that "correct" letters have been marked with '_' in guess and removed from answers. If this
+  // isn't done, then the method will not correctly handle doubled/multiple letters
   @tailrec
   private def buildResults(gLets: List[Char], aLets: List[Char], acc: List[LetterResult]): List[LetterResult] =
     gLets.headOption match
@@ -60,6 +66,8 @@ class Game private (
       case _ =>
         buildResults(gLets.tail, aLets, acc :+ LetterResult.Unused)
 
+  // enforces rules of a guess and calculates letter results. Guess may be upper/lower case, but will be interpreted
+  // as all lowercase
   private def judgeGuess(guessStringMixed: String, guesses: List[Either[BadGuess, Guess]]): Either[BadGuess, Guess] =
     val guessString = guessStringMixed.toLowerCase()
     // check for word length
@@ -85,7 +93,7 @@ class Game private (
       case _ => false
     } then
       Left(BadGuess(guessString, GuessError.HardModeViolation))
-    else if !allowedGuesses.contains(guessString.toLowerCase) then
+    else if !allowedGuesses.contains(guessString) then
       Left(BadGuess(guessString, GuessError.NotAWord))
     // all basic checks pass -- build guess
     else
@@ -105,7 +113,6 @@ class Game private (
         val nextState = gameState(0, expandedGuesses)
         Right(new Game(answer, maxGuessCount, possibleAnswers, allowedGuesses, expandedGuesses, hardMode, nextState))
 
-  def getAllGuesses: List[Either[BadGuess, Guess]] = guesses
   def getGoodGuesses: List[Guess] = guesses.filter(_.isRight).map(_.toOption.get)
 
   def isWon: Boolean = state == GameState.Won
