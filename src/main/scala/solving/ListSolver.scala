@@ -2,10 +2,31 @@ package com.edgiese.wordle1
 package solving
 
 import solving.ListSolver.filterAnswers
+import solving.scorers._
 
-case class ListSolverConfig(hardMode: Boolean, defaultFirst: String = "arise")
+import com.edgiese.wordle1.solving.ScorerType.FirstIThoughtOf
+
+// Scorer trait used to tie together the different scoring methods. The one used for the solver is
+// specified in the config
+trait Scorer:
+  def calculateScores(game: Game, guessStrings: List[String]): Either[SolverError, List[(String, Int)]]
+  def orderLowToHigh(): Boolean
+
+enum ScorerType:
+  case FirstIThoughtOf
+
+case class ListSolverConfig(hardMode: Boolean, scorerType: ScorerType, defaultFirst: String = "arise")
 
 case class ListSolver(answers: List[String], guessWords: List[String], config: ListSolverConfig) extends Solver:
+  private final val scorer = config.scorerType match
+    case FirstIThoughtOf => new FirstIThoughtOf()
+
+  private def sorter(a:(String, Int), b:(String, Int)): Boolean = 
+    if scorer.orderLowToHigh() then
+      a._2 > b._2
+    else
+      a._2 < b._2  
+
   def solve(game: Game): Either[SolverError, Solution] =
     if game.isOver then
       return Left(SolverError.GameOver)
@@ -20,9 +41,12 @@ case class ListSolver(answers: List[String], guessWords: List[String], config: L
       // only one answer -- return it
       return Right(Solution(matchingAnswers.head, 1, 1))
 
-    // there is more than one solution. For now, only return the first one. add more options to improve later
-    val nextGuess = matchingAnswers.head
-    Right(Solution(nextGuess, matchingAnswers.length, 1))
+    // return first best-scored answer or error if it occurred
+    scorer.calculateScores(game, matchingAnswers) match
+      case Left(error) => Left(error)
+      case Right(guessesAndScores) =>
+        val chosen = guessesAndScores.sortWith(sorter).head
+        Right(Solution(chosen._1, matchingAnswers.length, chosen._2))
 
 
 object ListSolver:
@@ -31,7 +55,7 @@ object ListSolver:
       return answers
     // guesses are a list of letter results collected by guess. combine characters with results and transpose so that
     // we have a list collected by letter, in order. so n Guesses becomes 5 Letter-result lists 
-    // (or however long the answer is)
+    // (5 or however many characters long the answer is)
     val letterGuesses: List[List[(Char, LetterResult)]] = guesses
       .map(guess => guess.word.toList.zip(guess.result))
       .transpose

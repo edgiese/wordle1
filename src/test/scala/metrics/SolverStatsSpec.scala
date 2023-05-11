@@ -4,6 +4,7 @@ package metrics
 import LetterResult.*
 import solving.{ListSolver, ListSolverConfig}
 
+import com.edgiese.wordle1.solving.ScorerType.FirstIThoughtOf
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.io.Source
@@ -17,7 +18,7 @@ class SolverStatsSpec extends AnyFlatSpec:
     val words5 = source.getLines.toList.map(_.trim)
     source.close()
 
-    val listSolver = ListSolver(words5, words5, ListSolverConfig(false, defaultFirst = "grace"))
+    val listSolver = ListSolver(words5, words5, ListSolverConfig(false, FirstIThoughtOf, defaultFirst = "grace"))
     val stats = SolverStats(listSolver, 6, words5, None, false)
 
     val gResult = stats.playOneGame("ethic")
@@ -31,10 +32,11 @@ class SolverStatsSpec extends AnyFlatSpec:
     val words5 = source.getLines.toList.map(_.trim).filter(!regex.matches(_))
     source.close()
 
-    val listSolver = ListSolver(words5, words5, ListSolverConfig(false))
+    val listSolver = ListSolver(words5, words5, ListSolverConfig(false, FirstIThoughtOf))
     val stats = SolverStats(listSolver, 6, words5, None, false)
 
     val counts = stats.calculateStats()
+    println(counts)
     assert(counts.total > 4000)
   }
 

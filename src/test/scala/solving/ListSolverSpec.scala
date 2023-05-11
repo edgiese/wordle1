@@ -1,13 +1,14 @@
 package com.edgiese.wordle1
 package solving
 
+import com.edgiese.wordle1.solving.ScorerType.FirstIThoughtOf
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ListSolverSpec extends AnyFlatSpec:
   behavior of "a list solver"
 
   private val wordSet1 = List("apple", "arise", "spine", "spite", "mover", "topaz")
-  private val baseConfig = ListSolverConfig(true)
+  private val baseConfig = ListSolverConfig(true, FirstIThoughtOf)
   private val listSolver = ListSolver(wordSet1, wordSet1, baseConfig)
 
   it should "return an error when the game is over" in {

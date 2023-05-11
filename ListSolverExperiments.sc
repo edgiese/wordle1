@@ -1,6 +1,5 @@
 import com.edgiese.wordle1._
-import com.edgiese.wordle1.solving.ListSolver
-import com.edgiese.wordle1.solving.ListSolverConfig
+import com.edgiese.wordle1.solving.{ListSolver, ListSolverConfig, ScorerType}
 import com.edgiese.wordle1.metrics.SolverStats
 import scala.io.Source
 
@@ -9,7 +8,7 @@ val regex = "[^a-z]".r.unanchored
 val words5 = source.getLines.toList.map(_.trim).filter(!regex.matches(_))
 source.close()
 
-val listSolver = ListSolver(words5, words5, ListSolverConfig(false, defaultFirst = "grace"))
+val listSolver = ListSolver(words5, words5, ListSolverConfig(false, ScorerType.FirstIThoughtOf, defaultFirst = "grace"))
 val stats = SolverStats(listSolver, 6, words5, None, false)
 
 val nextGuess = for
