@@ -4,8 +4,6 @@ package solving
 import solving.ListSolver.filterAnswers
 import solving.scorers._
 
-import com.edgiese.wordle1.solving.ScorerType.FirstIThoughtOf
-
 // Scorer trait used to tie together the different scoring methods. The one used for the solver is
 // specified in the config
 trait Scorer:
@@ -13,19 +11,18 @@ trait Scorer:
   def orderLowToHigh(): Boolean
 
 enum ScorerType:
-  case FirstIThoughtOf
+  case FirstIThoughtOf, LastIThoughtOf, ScrabbleScores, ScrabbleScoresAvoidDups, ModifiedScrabbleScoresAvoidDups, CountLetters
 
 case class ListSolverConfig(hardMode: Boolean, scorerType: ScorerType, defaultFirst: String = "arise")
 
 case class ListSolver(answers: List[String], guessWords: List[String], config: ListSolverConfig) extends Solver:
   private final val scorer = config.scorerType match
-    case FirstIThoughtOf => new FirstIThoughtOf()
-
-  private def sorter(a:(String, Int), b:(String, Int)): Boolean = 
-    if scorer.orderLowToHigh() then
-      a._2 > b._2
-    else
-      a._2 < b._2  
+    case ScorerType.FirstIThoughtOf => new FirstFound()
+    case ScorerType.LastIThoughtOf => new LastFound()
+    case ScorerType.ScrabbleScores => new Scrabble()
+    case ScorerType.ScrabbleScoresAvoidDups => new ScrabbleDups()
+    case ScorerType.ModifiedScrabbleScoresAvoidDups => new ScrabbleModDups()
+    case ScorerType.CountLetters => new LetterCounter()
 
   def solve(game: Game): Either[SolverError, Solution] =
     if game.isOver then
@@ -40,6 +37,14 @@ case class ListSolver(answers: List[String], guessWords: List[String], config: L
     if matchingAnswers.tail.isEmpty then
       // only one answer -- return it
       return Right(Solution(matchingAnswers.head, 1, 1))
+
+    // sorting method to rank valid choices. note that because there can be duplicate scores, the
+    // results of this sort are deterministic, but not necessarily easily predictable
+    def sorter(a: (String, Int), b: (String, Int)): Boolean =
+      if scorer.orderLowToHigh() then
+        a._2 < b._2
+      else
+        a._2 > b._2
 
     // return first best-scored answer or error if it occurred
     scorer.calculateScores(game, matchingAnswers) match
@@ -68,7 +73,7 @@ object ListSolver:
     val unused = (letterGuesses.flatten.filter(_._2 == LetterResult.Unused).map(_._1).toSet -- excludedInWord).toList
     // all "used somewhere" characters across all positions
     val used = letterGuesses.flatten.filter(_._2 == LetterResult.Exists).map(_._1).distinct
-    // list of required letters by position
+    // list of required letters by position -- will be Option[Char] with None if required letter unknown
     val required = letterGuesses.map(lg => lg.find(_._2 == LetterResult.Correct))
 
     // build a regex string that will match if a word is line with guesses up until now -- everything except "exists"
@@ -84,4 +89,5 @@ object ListSolver:
       str + regexStringForCharPosition
     )
     val regexes = used.map(_.toString.r.unanchored) :+ exclRegexString.r.unanchored
-    answers.filter(answer => regexes.forall(_.matches(answer)))
+    val guessWords = guesses.map(_.word)
+    answers.filter(answer => regexes.forall(_.matches(answer)) && !guessWords.contains(answer))

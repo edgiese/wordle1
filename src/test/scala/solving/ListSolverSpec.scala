@@ -1,7 +1,7 @@
 package com.edgiese.wordle1
 package solving
 
-import com.edgiese.wordle1.solving.ScorerType.FirstIThoughtOf
+import solving.ScorerType._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ListSolverSpec extends AnyFlatSpec:

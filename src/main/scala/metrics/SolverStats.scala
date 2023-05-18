@@ -34,6 +34,7 @@ class SolverStats(
         if game.isWon then
           counts.copy(total=counts.total+1, won=counts.won+1, wonTurns=counts.wonTurns+game.getGoodGuesses.length)
         else
+          println(game)
           counts.copy(total=counts.total+1, lost=counts.lost+1)
 
   def calculateStats(): SolverCounts =

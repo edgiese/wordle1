@@ -3,7 +3,7 @@ package solving.scorers
 
 import solving.{Scorer, SolverError}
 
-class FirstIThoughtOf extends Scorer:
+class FirstFound extends Scorer:
   override def orderLowToHigh(): Boolean = true
 
   override def calculateScores(game: Game, guessStrings: List[String]): Either[SolverError, List[(String, Int)]] =
